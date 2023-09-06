@@ -1,0 +1,5 @@
+{:deps
+ {ring/ring {:mvn/version "1.9.0"}
+  ring/ring-codec {:mvn/version "1.2.0"}
+  net.clojars.kelveden/ring-jwt {:mvn/version "2.4.0"}
+  cheshire/cheshire {:mvn/version "5.11.0"}}}
