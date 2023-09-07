@@ -13,7 +13,55 @@
 (def client-id (System/getenv "OAUTH2_CLIENT_ID"))
 (def client-secret (System/getenv "OAUTH2_CLIENT_SECRET"))
 
-(defn wrap-auth [app]
+;; randomly generated constant
+(def uuid-namespace "61c7cd53-0d72-4ad5-8ae6-1a79849d21b7")
+
+(defn username->uuid [username]
+  (java.util.UUID/nameUUIDFromBytes (.getBytes (str uuid-namespace username))))
+
+(defn- wrap-auth-fake [app]
+  (fn [req]
+    (case (:uri req)
+      "/login"
+      (case (:request-method req)
+        :get
+        {:status 200
+         :headers {"content-type" "text/html"}
+         :body
+"<h2>No OIDC configured, impersonate user:</h2>
+<form method=post>
+Username: <input type=text name=username><br>
+Display Name: <input type=text name=name><br>
+Email: <input type=text name=email><br>
+<input type=submit value='Impersonate!'>
+</form>"
+         :session {}}
+
+        :post
+        (let [params (-> req :body slurp codec/form-decode)
+              _ (prn params)
+              username (get params "username" "anonymous")
+              session (-> {}
+                          (assoc-in [:user :uuid] (str (username->uuid username)))
+                          (assoc-in [:user :email] (get params "email" "default@example.org"))
+                          (assoc-in [:user :name] (get params "name" "A. Nonymous"))
+                          (assoc-in [:user :username] username))]
+          {:status 302
+           :headers {"location" "/"}
+           :body ""
+           :session session})
+
+        ;; else
+        {:status 302
+         :headers {"location" "/login"}})
+
+      "/callback"
+      {:status 500}
+
+      ;; else
+      (app req))))
+
+(defn- wrap-auth-oidc [app]
   (fn [req]
     (case (:uri req)
       "/login"
@@ -64,3 +112,8 @@
 
       ;; else
       (app req))))
+
+(defn wrap-auth [app]
+  (if (and client-id client-secret)
+    (wrap-auth-oidc app)
+    (wrap-auth-fake app)))
