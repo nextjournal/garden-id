@@ -117,3 +117,9 @@ Email: <input type=text name=email><br>
   (if (and client-id client-secret)
     (wrap-auth-oidc app)
     (wrap-auth-fake app)))
+
+(defn get-user [req]
+  (get-in req [:session :user]))
+
+(defn logged-in? [req]
+  (some? (get-user req)))
