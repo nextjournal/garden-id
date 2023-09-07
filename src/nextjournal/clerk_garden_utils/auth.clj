@@ -1,6 +1,6 @@
 (ns nextjournal.clerk-garden-utils.auth
   (:require [cheshire.core :as json]
-            [org.httpkit.client :as http]
+            [babashka.http-client :as http]
             [ring.util.codec :as codec]
             [ring.middleware.token :as token])
   (:import (com.auth0.jwt.exceptions JWTVerificationException)))
@@ -34,12 +34,10 @@
           (if (= (get query-strings "state") login-state)
             (let [resp (-> (http/post "https://auth.clerk.garden/oauth2/token"
                                       {:basic-auth [client-id client-secret]
-                                       :headers {"Content-Type" "application/x-www-form-urlencoded"}
-                                       :body (str "code=" code "&"
-                                                  "grant_type=" "authorization_code" "&"
-                                                  "client_id=" client-id
-                                                  )})
-                           deref
+                                       :headers {:content-type "application/x-www-form-urlencoded"}
+                                       :form-params {"code" code
+                                                     "grant_type" "authorization_code"
+                                                     "client_id" client-id}})
                            :body
                            (json/parse-string true))]
               (println :resp resp)
