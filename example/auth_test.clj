@@ -11,9 +11,9 @@
     (let [session (update (:session req) :visits (fnil inc 0))]
       {:status 200 :headers {"content-type" "text/html"}
        :body (format "hi %s - you have visited %s times - %s"
-                     (or (:user session) "stranger")
+                     (or (garden-id/get-user req) "stranger")
                      (or (:visits session) "unknown")
-                     (if (:user session)
+                     (if (garden-id/logged-in? req)
                        "<a href=/logout>logout from app</a>"
                        "<a href=/start>login</a>"))
        :session session})
