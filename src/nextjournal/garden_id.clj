@@ -1,4 +1,4 @@
-(ns nextjournal.clerk-garden-utils.auth
+(ns nextjournal.garden-id
   (:require [cheshire.core :as json]
             [babashka.http-client :as http]
             [ring.util.codec :as codec]
