@@ -1,7 +1,7 @@
 # nextjournal.garden-id
 
 Provides helpers to work with the clerk.garden OpenID Connect provider.
-Wrap your Ring app using `(auth/wrap-auth <app>)`, and ensure you also
+Wrap your Ring app using `(garden-id/wrap-auth <app>)`, and ensure you also
 use `ring.middleware.session/wrap-session`.
 
 Redirecting to "/login" will send the user to a login page; upon
