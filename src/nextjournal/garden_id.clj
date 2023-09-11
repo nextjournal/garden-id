@@ -2,7 +2,7 @@
   (:require [cheshire.core :as json]
             [clojure.java.io :as io]
             [babashka.http-client :as http]
-            [hiccup.page :as hiccup]
+            [huff.core :as h]
             [ring.util.codec :as codec]
             [ring.middleware.token :as token])
   (:import (com.auth0.jwt.exceptions JWTVerificationException)))
@@ -46,22 +46,23 @@
   "tailwind.config = { theme: {fontFamily: { sans: [\"Fira Sans\", \"-apple-system\", \"BlinkMacSystemFont\", \"sans-serif\"], serif: [\"PT Serif\", \"serif\"], mono: [\"Fira Mono\", \"monospace\"] } } }")
 
 (defn ->html [contents]
-  (hiccup/html5
-   [:head
-    [:meta {:charset "UTF-8"}]
-    [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
-    [:link {:rel "preconnect" :href "https://fonts.bunny.net"}]
-    (hiccup/include-css "https://fonts.bunny.net/css?family=fira-mono:400,700%7Cfira-sans:400,400i,500,500i,700,700i%7Cfira-sans-condensed:700,700i%7Cpt-serif:400,400i,700,700i")
-    (hiccup/include-js "https://cdn.tailwindcss.com?plugins=typography")
-    [:script tw-config]
-    [:script {:type "text/javascript"} (slurp (io/resource "js/login.js"))]]
-   [:body.bg-slate-950.flex.w-screen.h-screen.justify-center.items-center
-    (into [:div.sm:mx-auto.sm:w-full.sm:max-w-sm
-           [:div.max-w-lg.flex.justify-center.items-center.w-full
-            [:img {:src "https://cdn.nextjournal.com/data/QmTWkWW9XkFVWjnNLLyXbU3TvZXx9DuS4nTVpETQGCwRTV?filename=The-Garden.png&content-type=image/png"
-                   :width 100
-                   :height 100}]]]
-          contents)]))
+  (h/html
+   [:html
+    [:head
+     [:meta {:charset "UTF-8"}]
+     [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+     [:link {:rel "preconnect" :href "https://fonts.bunny.net"}]
+     [:link {:rel "stylesheet" :href "https://fonts.bunny.net/css?family=fira-mono:400,700%7Cfira-sans:400,400i,500,500i,700,700i%7Cfira-sans-condensed:700,700i%7Cpt-serif:400,400i,700,700i"}]
+     [:script {:type "text/javascript" :src "https://cdn.tailwindcss.com?plugins=typography"}]
+     [:script tw-config]
+     [:script {:type "text/javascript"} (slurp (io/resource "js/login.js"))]]
+    [:body.bg-slate-950.flex.w-screen.h-screen.justify-center.items-center
+     [:div.sm:mx-auto.sm:w-full.sm:max-w-sm
+      [:div.max-w-lg.flex.justify-center.items-center.w-full.mb-6
+       [:img {:src "https://cdn.nextjournal.com/data/QmTWkWW9XkFVWjnNLLyXbU3TvZXx9DuS4nTVpETQGCwRTV?filename=The-Garden.png&content-type=image/png"
+              :width 100
+              :height 100}]]
+      contents]]]))
 
 (defn- wrap-auth-fake [app]
   (fn [req]

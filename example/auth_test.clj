@@ -26,10 +26,9 @@
 
     "/start"
     {:status 200 :headers {"content-type" "text/html"}
-     :body (garden-id/->html [:div
-                              [:div
-                               (garden-id/render-link-button {:href "/login" :label "Login"})
-                               (garden-id/render-link-button {:href "/https://login.auth.clerk.garden/logout" :label "Logout"})]])}
+     :body (garden-id/->html [:div.flex.flex-col.gap-3
+                              (garden-id/render-link-button {:href "/login" :label "Login"})
+                              (garden-id/render-link-button {:href "/https://login.auth.clerk.garden/logout" :label "Logout"})])}
 
     {:status 400 :body "not found"}))
 
