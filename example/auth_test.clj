@@ -27,7 +27,7 @@
     "/start"
     {:status 200 :headers {"content-type" "text/html"}
      :body (garden-id/->html [:div
-                              [:div.flex.flex-col.gap-4
+                              [:div
                                (garden-id/render-link-button {:href "/login" :label "Login"})
                                (garden-id/render-link-button {:href "/https://login.auth.clerk.garden/logout" :label "Logout"})]])}
 

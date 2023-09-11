@@ -1,5 +1,6 @@
 (ns nextjournal.garden-id
   (:require [cheshire.core :as json]
+            [clojure.java.io :as io]
             [babashka.http-client :as http]
             [hiccup.page :as hiccup]
             [ring.util.codec :as codec]
@@ -52,7 +53,8 @@
     [:link {:rel "preconnect" :href "https://fonts.bunny.net"}]
     (hiccup/include-css "https://fonts.bunny.net/css?family=fira-mono:400,700%7Cfira-sans:400,400i,500,500i,700,700i%7Cfira-sans-condensed:700,700i%7Cpt-serif:400,400i,700,700i")
     (hiccup/include-js "https://cdn.tailwindcss.com?plugins=typography")
-    [:script tw-config]]
+    [:script tw-config]
+    [:script {:type "text/javascript"} (slurp (io/resource "js/login.js"))]]
    [:body.bg-slate-950.flex.w-screen.h-screen.justify-center.items-center
     (into [:div.sm:mx-auto.sm:w-full.sm:max-w-sm
            [:div.max-w-lg.flex.justify-center.items-center.w-full
