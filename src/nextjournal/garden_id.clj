@@ -20,6 +20,11 @@
 (defn username->uuid [username]
   (java.util.UUID/nameUUIDFromBytes (.getBytes (str uuid-namespace username))))
 
+(defn render-link-button [{:as attributes :keys [label]}]
+  [:a.bg-green-300.font-sans.rounded-md.text-center.block.w-full.px-4.py-2.text-sm.font-medium.hover:bg-green-200.transition-all
+   (dissoc attributes :label)
+   label])
+
 (defn render-button [{:as attributes :keys [label]}]
   [:button.bg-green-300.font-sans.rounded-md.text-center.block.w-full.px-4.py-2.text-sm.font-medium.hover:bg-green-200.transition-all
    (dissoc attributes :label)

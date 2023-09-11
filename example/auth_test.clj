@@ -10,12 +10,14 @@
     "/"
     (let [session (update (:session req) :visits (fnil inc 0))]
       {:status 200 :headers {"content-type" "text/html"}
-       :body (format "hi %s - you have visited %s times - %s"
-                     (or (garden-id/get-user req) "stranger")
-                     (or (:visits session) "unknown")
-                     (if (garden-id/logged-in? req)
-                       "<a href=/logout>logout from app</a>"
-                       "<a href=/start>login</a>"))
+       :body (garden-id/->html [:div.text-center
+                                [:h2.font-bold.text-white.text-xl.mb-2.text-center
+                                 (format "Hi %s 👋" (or (garden-id/get-user req) "Stranger"))]
+                                [:p.text-white.mb-6.text-center
+                                 (format "You have visited %s times" (or (:visits session) "unknown"))]
+                                (if (garden-id/logged-in? req)
+                                  (garden-id/render-link-button {:href "/logout" :label "Logout from app"})
+                                  (garden-id/render-link-button {:href "/start" :label "Login"}))])
        :session session})
 
     "/logout"
@@ -24,9 +26,11 @@
 
     "/start"
     {:status 200 :headers {"content-type" "text/html"}
-     :body (str "<a href=/login>login</a> <a href=\"https://login.auth.clerk.garden/logout\">logout</a>")}
-      
-    ;else
+     :body (garden-id/->html [:div
+                              [:div.flex.flex-col.gap-4
+                               (garden-id/render-link-button {:href "/login" :label "Login"})
+                               (garden-id/render-link-button {:href "/https://login.auth.clerk.garden/logout" :label "Logout"})]])}
+
     {:status 400 :body "not found"}))
 
 (defn start [_]
