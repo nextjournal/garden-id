@@ -45,8 +45,95 @@
 (def tw-config
   "tailwind.config = { theme: {fontFamily: { sans: [\"Fira Sans\", \"-apple-system\", \"BlinkMacSystemFont\", \"sans-serif\"], serif: [\"PT Serif\", \"serif\"], mono: [\"Fira Mono\", \"monospace\"] } } }")
 
+(def impersonate-js
+  "function loadPersonas() {
+  let personas = localStorage.getItem('personas');
+  if (personas) {
+    return JSON.parse(personas);
+  }
+}
+
+function removePersona(id) {
+  let personas = loadPersonas();
+  localStorage.setItem('personas', JSON.stringify(personas.filter(function(persona) { persona.id != id; })));
+}
+
+function addPersona(persona) {
+  let personas = loadPersonas() || [];
+  personas.push(persona);
+  localStorage.setItem('personas', JSON.stringify(personas));
+}
+
+function submitPersona(persona) {
+  document.getElementById('input-username').value = persona.userName;
+  document.getElementById('input-name').value = persona.displayName;
+  document.getElementById('input-email').value = persona.email;
+  document.querySelector('form').submit();
+}
+
+function renderPersona(persona) {
+  let el = document.createElement('div');
+  el.classList.add('rounded-md', 'border', 'border-slate-700', 'hover:bg-slate-800', 'px-4', 'py-3', 'text-white', 'text-xs', 'font-sans', 'cursor-pointer', 'relative', 'group');
+
+  let userNameEl = document.createElement('div');
+  userNameEl.innerText = persona.userName;
+  userNameEl.classList.add('text-sm', 'font-bold');
+
+  let displayNameEl = document.createElement('div');
+  displayNameEl.classList.add('mt-1');
+  displayNameEl.innerText = persona.displayName + ' / ' + persona.email;
+
+  let removeEl = document.createElement('div');
+  removeEl.classList.add('text-[10px]', 'text-red-300', 'hover:underline', 'cursor-pointer', 'absolute', 'right-2', 'top-1', 'opacity-0', 'group-hover:opacity-100', 'transition-all');
+  removeEl.innerText = 'Remove';
+
+  el.appendChild(userNameEl);
+  el.appendChild(displayNameEl);
+  el.appendChild(removeEl);
+
+  el.addEventListener('click', function() {
+    submitPersona(persona);
+  });
+  removeEl.addEventListener('click', function(event) {
+    event.stopPropagation();
+    removePersona(persona.id);
+    el.remove();
+  });
+
+  return el;
+}
+
+function renderPersonas(personas) {
+  let listEl = document.getElementById('personas');
+  listEl.innerHTML = '';
+  personas.forEach(function(persona) {
+    listEl.appendChild(renderPersona(persona));
+  });
+}
+
+addEventListener('DOMContentLoaded', function() {
+  if (!document.getElementById('personas')) { return; }
+
+  let personas = loadPersonas();
+  if (personas) {
+    renderPersonas(personas);
+  }
+  document.getElementById('submit-persona').addEventListener('click', function(event) {
+    event.preventDefault();
+    addPersona({
+      userName: document.getElementById('input-username').value,
+      displayName: document.getElementById('input-name').value,
+      email: document.getElementById('input-email').value,
+      id: crypto.randomUUID()
+    })
+    event.target.closest('form').submit();
+  });
+
+})")
+
 (defn ->html [contents]
   (h/html
+   {:allow-raw true}
    [:html
     [:head
      [:meta {:charset "UTF-8"}]
@@ -54,8 +141,9 @@
      [:link {:rel "preconnect" :href "https://fonts.bunny.net"}]
      [:link {:rel "stylesheet" :href "https://fonts.bunny.net/css?family=fira-mono:400,700%7Cfira-sans:400,400i,500,500i,700,700i%7Cfira-sans-condensed:700,700i%7Cpt-serif:400,400i,700,700i"}]
      [:script {:type "text/javascript" :src "https://cdn.tailwindcss.com?plugins=typography"}]
-     [:script tw-config]
-     [:script {:type "text/javascript"} (slurp (io/resource "js/login.js"))]]
+     [:script [:hiccup/raw-html tw-config]]
+     [:script {:type "text/javascript"}
+      [:hiccup/raw-html impersonate-js #_(slurp (io/resource "js/login.js"))]]]
     [:body.bg-slate-950.flex.w-screen.h-screen.justify-center.items-center
      [:div.sm:mx-auto.sm:w-full.sm:max-w-sm
       [:div.max-w-lg.flex.justify-center.items-center.w-full.mb-6
@@ -78,11 +166,12 @@
                    [:div.uppercase.text-white.tracking-wide.text-xs.mb-1.font-sans
                     "No OIDC configured"]
                    [:h2.text-white.font-bold.text-xl "Impersonate User"]]
-                  [:form.flex.flex-col.gap-3 {:method "post"}
+                  [:form.flex.flex-col.gap-3.mb-6 {:method "post"}
                    (render-text-input {:name "username" :label "User name"})
                    (render-text-input {:name "name" :label "Display name"})
                    (render-text-input {:name "email" :label "Email"})
-                   (render-button {:type "submit" :label "Impersonate"})]])
+                   (render-button {:type "submit" :label "Impersonate" :id "submit-persona"})]
+                  [:div#personas.flex.flex-col.gap-3]])
          :session {}}
 
         :post
@@ -155,8 +244,8 @@
                    :session session})
                 (catch JWTVerificationException e
                   {:status 403 :headers {"content-type" "text/plain"} :body (format "failed to validate jwt - %s" (ex-message e))})))
-          {:status 403 :headers {"content-type" "text/html"} :body "denied"})
-        {:status 403 :headers {"content-type" "text/html"} :body "denied - wrong state"}))
+            {:status 403 :headers {"content-type" "text/html"} :body "denied"})
+          {:status 403 :headers {"content-type" "text/html"} :body "denied - wrong state"}))
 
       ;; else
       (app req))))
