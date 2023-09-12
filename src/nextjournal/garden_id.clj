@@ -90,7 +90,6 @@
 
         :post
         (let [params (-> req :body slurp codec/form-decode)
-              _ (prn params)
               username (get params "username" "anonymous")
               session (-> {}
                           (assoc-in [:user :uuid] (str (username->uuid username)))
@@ -139,8 +138,6 @@
                                                      "client_id" client-id}})
                            :body
                            (json/parse-string true))]
-              (println :resp resp)
-
               (try
                 (let [token (:id_token resp)
                       alg-opts (get issuers (token/decode-issuer token))
