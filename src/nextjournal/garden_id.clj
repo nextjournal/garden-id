@@ -1,6 +1,8 @@
 (ns nextjournal.garden-id
   (:require [cheshire.core :as json]
+            [clojure.java.io :as io]
             [babashka.http-client :as http]
+            [huff.core :as h]
             [ring.util.codec :as codec]
             [ring.middleware.token :as token])
   (:import (com.auth0.jwt.exceptions JWTVerificationException)))
@@ -19,6 +21,51 @@
 (defn username->uuid [username]
   (java.util.UUID/nameUUIDFromBytes (.getBytes (str uuid-namespace username))))
 
+(defn render-link-button [{:as attributes :keys [label]}]
+  [:a.bg-green-300.font-sans.rounded-md.text-center.block.w-full.px-4.py-2.text-sm.font-medium.hover:bg-green-200.transition-all
+   (dissoc attributes :label)
+   label])
+
+(defn render-button [{:as attributes :keys [label]}]
+  [:button.bg-green-300.font-sans.rounded-md.text-center.block.w-full.px-4.py-2.text-sm.font-medium.hover:bg-green-200.transition-all
+   (dissoc attributes :label)
+   label])
+
+(defn render-text-input [{:as attributes :keys [label name]}]
+  (let [dom-id (str "input-" name)]
+    [:div
+     (when label
+       [:label.block.text-sm.font-medium.leading-6.text-white.font-sans.mb-1 {:for dom-id} label])
+     [:input
+      (-> attributes 
+          (assoc :class "block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6 px-2 font-sans"
+                 :id dom-id)
+          (dissoc :label))]]))
+
+(def tw-config
+  "tailwind.config = { theme: {fontFamily: { sans: [\"Fira Sans\", \"-apple-system\", \"BlinkMacSystemFont\", \"sans-serif\"], serif: [\"PT Serif\", \"serif\"], mono: [\"Fira Mono\", \"monospace\"] } } }")
+
+(defn ->html [contents]
+  (h/html
+   {:allow-raw true}
+   [:html
+    [:head
+     [:meta {:charset "UTF-8"}]
+     [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+     [:link {:rel "preconnect" :href "https://fonts.bunny.net"}]
+     [:link {:rel "stylesheet" :href "https://fonts.bunny.net/css?family=fira-mono:400,700%7Cfira-sans:400,400i,500,500i,700,700i%7Cfira-sans-condensed:700,700i%7Cpt-serif:400,400i,700,700i"}]
+     [:script {:type "text/javascript" :src "https://cdn.tailwindcss.com?plugins=typography"}]
+     [:script [:hiccup/raw-html tw-config]]
+     [:script {:type "text/javascript"}
+      [:hiccup/raw-html (slurp (io/resource "nextjournal/garden-id/js/login.js"))]]]
+    [:body.bg-slate-950.flex.w-screen.h-screen.justify-center.items-center
+     [:div.sm:mx-auto.sm:w-full.sm:max-w-sm
+      [:div.max-w-lg.flex.justify-center.items-center.w-full.mb-6
+       [:img {:src "https://cdn.nextjournal.com/data/QmTWkWW9XkFVWjnNLLyXbU3TvZXx9DuS4nTVpETQGCwRTV?filename=The-Garden.png&content-type=image/png"
+              :width 100
+              :height 100}]]
+      contents]]]))
+
 (defn- wrap-auth-fake [app]
   (fn [req]
     (case (:uri req)
@@ -28,13 +75,17 @@
         {:status 200
          :headers {"content-type" "text/html"}
          :body
-"<h2>No OIDC configured, impersonate user:</h2>
-<form method=post>
-Username: <input type=text name=username><br>
-Display Name: <input type=text name=name><br>
-Email: <input type=text name=email><br>
-<input type=submit value='Impersonate!'>
-</form>"
+         (->html [:div
+                  [:div.text-center.mb-6
+                   [:div.uppercase.text-white.tracking-wide.text-xs.mb-1.font-sans
+                    "No OIDC configured"]
+                   [:h2.text-white.font-bold.text-xl "Impersonate User"]]
+                  [:form.flex.flex-col.gap-3.mb-6 {:method "post"}
+                   (render-text-input {:name "username" :label "User name"})
+                   (render-text-input {:name "name" :label "Display name"})
+                   (render-text-input {:name "email" :label "Email"})
+                   (render-button {:type "submit" :label "Impersonate" :id "submit-persona"})]
+                  [:div#personas.flex.flex-col.gap-3]])
          :session {}}
 
         :post
@@ -107,8 +158,8 @@ Email: <input type=text name=email><br>
                    :session session})
                 (catch JWTVerificationException e
                   {:status 403 :headers {"content-type" "text/plain"} :body (format "failed to validate jwt - %s" (ex-message e))})))
-          {:status 403 :headers {"content-type" "text/html"} :body "denied"})
-        {:status 403 :headers {"content-type" "text/html"} :body "denied - wrong state"}))
+            {:status 403 :headers {"content-type" "text/html"} :body "denied"})
+          {:status 403 :headers {"content-type" "text/html"} :body "denied - wrong state"}))
 
       ;; else
       (app req))))
