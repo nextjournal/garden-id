@@ -20,10 +20,6 @@
                                   (garden-id/render-link-button {:href "/start" :label "Login"}))])
        :session session})
 
-    "/logout"
-    {:status 302 :headers {"location" "/"} :body "logged out"
-     :session nil}
-
     "/start"
     {:status 200 :headers {"content-type" "text/html"}
      :body (garden-id/->html [:div.flex.flex-col.gap-3

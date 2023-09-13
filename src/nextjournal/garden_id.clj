@@ -123,7 +123,11 @@
                    "location" (str "https://auth.clerk.garden/oauth2/auth?response_type=code&scope=openid%20profile&client_id=" client-id "&state=" (:login-state session))}
          :body ""
          :session session})
-      
+
+      "/logout"
+      {:status 302 :headers {"location" "/"} :body "logged out"
+       :session nil}
+
       "/callback"
       (let [query-strings (codec/form-decode (str (:query-string req)))
             session (:session req)
