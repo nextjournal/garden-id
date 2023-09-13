@@ -105,6 +105,10 @@
         {:status 302
          :headers {"location" "/login"}})
 
+      "/logout"
+      {:status 302 :headers {"location" "/"} :body "logged out"
+       :session nil}
+
       "/callback"
       {:status 500}
 
