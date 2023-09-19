@@ -31,7 +31,7 @@
 (defn start [_]
   (nrepl.server/start-server :bind "0.0.0.0" :port 6666)
   (httpkit/run-server (-> consuming-app
-                          (garden-id/wrap-auth)
+                          (garden-id/wrap-auth #_{:github [["nextjournal"]]})
                           (session/wrap-session {:store (cookie-store)}))
                       {:legacy-return-value? false :port 7777})
   (println "started."))

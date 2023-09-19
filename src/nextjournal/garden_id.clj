@@ -15,6 +15,8 @@
 (def client-id (System/getenv "OAUTH2_CLIENT_ID"))
 (def client-secret (System/getenv "OAUTH2_CLIENT_SECRET"))
 
+(def github-api-token (System/getenv "GITHUB_API_TOKEN"))
+
 ;; randomly generated constant
 (def uuid-namespace "61c7cd53-0d72-4ad5-8ae6-1a79849d21b7")
 
@@ -66,7 +68,7 @@
               :height 100}]]
       contents]]]))
 
-(defn- wrap-auth-fake [app]
+(defn- wrap-auth-fake [app _opts]
   (fn [req]
     (case (:uri req)
       "/login"
@@ -115,7 +117,38 @@
       ;; else
       (app req))))
 
-(defn- wrap-auth-oidc [app]
+(defn- validate-github-member? [user org team]
+  ;; XXX the username could have changed, but there's no API that
+  ;; goes by user id directly
+  (let [url (if team
+              (format "https://api.github.com/orgs/%s/teams/%s/memberships/%s"
+                      org team user)
+              (format "https://api.github.com/orgs/%s/memberships/%s"
+                      org user))
+        resp (http/get url {:headers {"Authorization"
+                                      (str "token " github-api-token)}
+                            :throw false})]
+    (and (= 200 (:status resp))
+         (= "active" (:state (json/parse-string (:body resp) true))))))
+
+(defn- validate-extra-claims? [claims opts]
+  (cond
+    (empty? opts)
+    true
+
+    (:github opts)
+    (and (= (:issuer claims) "https://github.com/login/oauth/access_token")
+         (some (fn [org-and-team]
+                 (validate-github-member? (:github_username claims)
+                                          (first org-and-team)
+                                          (second org-and-team)))
+               (:github opts)))
+
+    :else
+    false))
+    
+
+(defn- wrap-auth-oidc [app opts]
   (fn [req]
     (case (:uri req)
       "/login"
@@ -146,12 +179,15 @@
                                                      "client_id" client-id}})
                            :body
                            (json/parse-string true))]
+              (prn resp)
               (try
                 (let [token (:id_token resp)
                       alg-opts (get issuers (token/decode-issuer token))
                       claims (token/decode token alg-opts)
                       _ (when-not (some #{client-id} (:aud claims))
                           (throw (JWTVerificationException. "The Claim 'aud' value doesn't contain the required audience")))
+                      _ (when-not (validate-extra-claims? claims opts)
+                          (throw (JWTVerificationException. "Additional claims could not be verified")))
                       session (-> session
                                   (assoc-in [:user :uuid] (:sub claims))
                                   (assoc-in [:user :email] (:email claims))
@@ -169,10 +205,13 @@
       ;; else
       (app req))))
 
-(defn wrap-auth [app]
-  (if (and client-id client-secret)
-    (wrap-auth-oidc app)
-    (wrap-auth-fake app)))
+(defn wrap-auth
+  ([app]
+   (wrap-auth app {}))
+  ([app opts]
+   (if (and client-id client-secret)
+     (wrap-auth-oidc app opts)
+     (wrap-auth-fake app opts))))
 
 (defn get-user [req]
   (get-in req [:session :user]))
