@@ -138,16 +138,16 @@
 
     (:github opts)
     (and (= (:issuer claims) "https://github.com/login/oauth/access_token")
-         (some (fn [org-and-team]
-                 (validate-github-member? (:github_username claims)
-                                          (first org-and-team)
-                                          (second org-and-team)))
-               (:github opts)))
+         (or (empty? opts)
+             (some (fn [org-and-team]
+                     (validate-github-member? (:github_username claims)
+                                              (first org-and-team)
+                                              (second org-and-team)))
+                   (:github opts))))
 
     :else
     false))
     
-
 (defn- wrap-auth-oidc [app opts]
   (fn [req]
     (case (:uri req)
