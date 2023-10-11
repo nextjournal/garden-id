@@ -21,3 +21,5 @@ restrict access to members of an organization or a team thereof.
 You need a valid Github API token in the environment variable
 `GITHUB_API_TOKEN` that is scoped to read the organization members.
 (Use a Garden secret to set this!)
+
+`{:apple []}`: restrict access to users with Apple ID.

@@ -145,6 +145,9 @@
                                               (second org-and-team)))
                    (:github opts))))
 
+    (:apple opts)
+    (= (:issuer claims) "https://appleid.apple.com")
+
     :else
     false))
     
