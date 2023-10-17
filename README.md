@@ -1,6 +1,6 @@
 # nextjournal.garden-id
 
-Provides helpers to work with the clerk.garden OpenID Connect provider.
+Provides helpers to work with the application.garden OpenID Connect provider.
 Wrap your Ring app using `(garden-id/wrap-auth <app>)`, and ensure you also
 use `ring.middleware.session/wrap-session`.
 

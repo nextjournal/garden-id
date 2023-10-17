@@ -10,7 +10,10 @@
 (defonce issuers
   {"https://auth.clerk.garden"
    {:alg :RS256
-    :jwk-endpoint "https://auth.clerk.garden/.well-known/jwks.json"}})
+    :jwk-endpoint "https://auth.clerk.garden/.well-known/jwks.json"}
+   "https://auth.application.garden"
+   {:alg :RS256
+    :jwk-endpoint "https://auth.application.garden/.well-known/jwks.json"}})
 
 (def client-id (System/getenv "OAUTH2_CLIENT_ID"))
 (def client-secret (System/getenv "OAUTH2_CLIENT_SECRET"))
@@ -160,7 +163,7 @@
                         (assoc :login-state (str (java.util.UUID/randomUUID))))]
         {:status 302
          :headers {"content-type" "text/html"
-                   "location" (str "https://auth.clerk.garden/oauth2/auth?response_type=code&scope=openid%20profile&client_id=" client-id "&state=" (:login-state session))}
+                   "location" (str "https://auth.application.garden/oauth2/auth?response_type=code&scope=openid%20profile&client_id=" client-id "&state=" (:login-state session))}
          :body ""
          :session session})
 
@@ -174,7 +177,7 @@
             login-state (:login-state session)]
         (if-let [code (get query-strings "code")]
           (if (= (get query-strings "state") login-state)
-            (let [resp (-> (http/post "https://auth.clerk.garden/oauth2/token"
+            (let [resp (-> (http/post "https://auth.application.garden/oauth2/token"
                                       {:basic-auth [client-id client-secret]
                                        :headers {:content-type "application/x-www-form-urlencoded"}
                                        :form-params {"code" code
