@@ -153,11 +153,14 @@
 
     :else
     false))
-    
+
+(def login-url "/.application.garden/garden-id/login")
+(def logout-url "/.application.garden/garden-id/logout")
+
 (defn- wrap-auth-oidc [app opts]
   (fn [req]
     (case (:uri req)
-      "/login"
+      "/.application.garden/garden-id/login"
       (let [session (-> req
                         :session
                         (assoc :login-state (str (java.util.UUID/randomUUID))))]
@@ -167,11 +170,11 @@
          :body ""
          :session session})
 
-      "/logout"
+      "/.application.garden/garden-id/logout"
       {:status 302 :headers {"location" "/"} :body "logged out"
        :session nil}
 
-      "/callback"
+      "/.application.garden/garden-id/callback"
       (let [query-strings (codec/form-decode (str (:query-string req)))
             session (:session req)
             login-state (:login-state session)]
