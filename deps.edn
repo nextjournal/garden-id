@@ -1,0 +1,15 @@
+{:paths ["src" "resources"]
+ :deps
+ {ring/ring {:mvn/version "1.9.0"}
+  ring/ring-codec {:mvn/version "1.2.0"}
+  net.clojars.kelveden/ring-jwt {:mvn/version "2.4.0"}
+  org.babashka/http-client {:mvn/version "0.4.15"}
+  cheshire/cheshire {:mvn/version "5.11.0"}
+  io.github.escherize/huff {:mvn/version "0.1.0"}}
+
+ :aliases
+ {:nextjournal/garden {:extra-paths ["example"]
+                       :extra-deps {http-kit/http-kit {:mvn/version "2.7.0"}
+                                    nrepl/nrepl {:mvn/version "1.0.0"}}
+                       :exec-fn auth-test/start}}
+ }
