@@ -9,7 +9,5 @@
 
  :aliases
  {:nextjournal/garden {:extra-paths ["example"]
-                       :extra-deps {http-kit/http-kit {:mvn/version "2.7.0"}
-                                    nrepl/nrepl {:mvn/version "1.0.0"}}
-                       :exec-fn auth-test/start}}
- }
+                       :extra-deps {http-kit/http-kit {:mvn/version "2.7.0"}}
+                       :exec-fn auth-test/start}}}

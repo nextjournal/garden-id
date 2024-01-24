@@ -1,25 +1,31 @@
 # nextjournal.garden-id
 
-Provides helpers to work with the application.garden OpenID Connect provider.
-Wrap your Ring app using `(garden-id/wrap-auth <app>)`, and ensure you also
-use `ring.middleware.session/wrap-session`.
+Simplified authentication for [application.garden](https://application.garden) based on OpenID Connect.
 
-Redirecting to "/login" will send the user to a login page; upon
-successful login it redirects to "/" and user data is stored in the
-session.
+## Usage
 
-The url "/callback" is used internally and intercepted before your app,
-do not use it.
+Wrap your Ring app with `ring.middleware.session/wrap-session` and `nextjournal.garden-id/wrap-auth`.
 
-## Additional restrictions
+Redirecting to the path in `nextjournal.garden-id/login-uri` will send the user to a login page. Upon successful login it redirects to "/" and user data is stored in the session.
 
-Pass a map as second argument to `garden-id/wrap-auth`.
-Currently supported keys are:
+In local development authentication is mocked and you can impersonate arbitrary users.
 
-`{:github [["organization"]... ["organization" "team"]...]}`:
-restrict access to members of an organization or a team thereof.
-You need a valid Github API token in the environment variable
-`GITHUB_API_TOKEN` that is scoped to read the organization members.
-(Use a Garden secret to set this!)
+## Authorization
 
-`{:apple []}`: restrict access to users with Apple ID.
+You can configure authorization by passing a map as the second argument to `nextjournal.garden-id/wrap-auth`.
+
+### Github
+
+To only allow members of a certain Github organization or team to access your application, use:
+
+`(nextjournal.garden-id/wrap-auth my-app {:github [["organization"]... ["organization" "team"]...]})`
+
+You need a valid Github API token in the environment variable `GITHUB_API_TOKEN` that is scoped to read the organization members.
+
+Use an [application.garden secret](https://docs.apps.garden#secrets) to set this.
+
+### Apple ID
+
+To only allow login with Apple ID, use:
+
+`(nextjournal.garden-id/wrap-auth my-app {:apple []})`

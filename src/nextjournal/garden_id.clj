@@ -42,7 +42,7 @@
      (when label
        [:label.block.text-sm.font-medium.leading-6.text-white.font-sans.mb-1 {:for dom-id} label])
      [:input
-      (-> attributes 
+      (-> attributes
           (assoc :class "block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6 px-2 font-sans"
                  :id dom-id)
           (dissoc :label))]]))
@@ -74,7 +74,7 @@
 (defn- wrap-auth-fake [app _opts]
   (fn [req]
     (case (:uri req)
-      "/login"
+      "/.application.garden/garden-id/login"
       (case (:request-method req)
         :get
         {:status 200
@@ -108,13 +108,13 @@
 
         ;; else
         {:status 302
-         :headers {"location" "/login"}})
+         :headers {"location" "/.application.garden/garden-id/login"}})
 
-      "/logout"
+      "/.application.garden/garden-id/logout"
       {:status 302 :headers {"location" "/"} :body "logged out"
        :session nil}
 
-      "/callback"
+      "/.application.garden/garden-id/callback"
       {:status 500}
 
       ;; else
@@ -154,8 +154,8 @@
     :else
     false))
 
-(def login-url "/.application.garden/garden-id/login")
-(def logout-url "/.application.garden/garden-id/logout")
+(def login-uri "/.application.garden/garden-id/login")
+(def logout-uri "/.application.garden/garden-id/logout")
 
 (defn- wrap-auth-oidc [app opts]
   (fn [req]
