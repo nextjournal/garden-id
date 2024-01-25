@@ -120,14 +120,20 @@
       ;; else
       (app req))))
 
-(defn- validate-github-member? [user org team]
-  ;; XXX the username could have changed, but there's no API that
-  ;; goes by user id directly
-  (let [url (if team
+(defn- validate-github-member? [user-id org team]
+  ;; first map user-id to login name, then look up team membership
+  (let [username (-> (http/get (format "https://api.github.com/user/%d" user-id)
+                               {:headers {"Authorization"
+                                          (str "token " github-api-token)}
+                                :throw false})
+                     :body
+                     (json/parse-string true)
+                     :login)
+        url (if team
               (format "https://api.github.com/orgs/%s/teams/%s/memberships/%s"
-                      org team user)
+                      org team username)
               (format "https://api.github.com/orgs/%s/memberships/%s"
-                      org user))
+                      org username))
         resp (http/get url {:headers {"Authorization"
                                       (str "token " github-api-token)}
                             :throw false})]
@@ -143,7 +149,7 @@
     (and (= (:issuer claims) "https://github.com/login/oauth/access_token")
          (or (empty? opts)
              (some (fn [org-and-team]
-                     (validate-github-member? (:github_username claims)
+                     (validate-github-member? (:github_id claims)
                                               (first org-and-team)
                                               (second org-and-team)))
                    (:github opts))))
