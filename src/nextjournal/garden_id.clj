@@ -195,7 +195,6 @@
                                                      "client_id" client-id}})
                            :body
                            (json/parse-string true))]
-              (prn resp)
               (try
                 (let [token (:id_token resp)
                       alg-opts (get issuers (token/decode-issuer token))
