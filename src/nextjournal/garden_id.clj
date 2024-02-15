@@ -123,7 +123,7 @@
 
 (defn- validate-github-member? [user-id org team]
   ;; first map user-id to login name, then look up team membership
-  (let [username (-> (http/get (format "https://api.github.com/user/%d" user-id)
+  (let [username (-> (http/get (format "https://api.github.com/user/%s" user-id)
                                {:headers {"Authorization"
                                           (str "token " github-api-token)}
                                 :throw false})
@@ -148,7 +148,7 @@
 
     (:github opts)
     (and (= (:issuer claims) "https://github.com/login/oauth/access_token")
-         (or (empty? opts)
+         (or (empty? (:github opts))
              (some (fn [org-and-team]
                      (validate-github-member? (:github_id claims)
                                               (first org-and-team)
