@@ -94,7 +94,8 @@
          :session {}}
 
         :post
-        (let [params (-> req :body slurp codec/form-decode)
+        (let [params (or (-> req :params)
+                         (-> req :body slurp codec/form-decode))
               username (get params "username" "anonymous")
               session (-> {}
                           (assoc-in [:user :uuid] (str (username->uuid username)))
