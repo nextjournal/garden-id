@@ -142,27 +142,25 @@
          (= "active" (:state (json/parse-string (:body resp) true))))))
 
 (defn- validate-extra-claims? [claims opts]
-  (cond
-    (empty? opts)
-    true
+  (or (empty? opts)
 
-    (:github opts)
-    (and (= (:issuer claims) "https://github.com/login/oauth/access_token")
-         (or (empty? (:github opts))
-             (some (fn [org-and-team]
-                     (validate-github-member? (:github_id claims)
-                                              (first org-and-team)
-                                              (second org-and-team)))
-                   (:github opts))))
+      (when (:github opts)
+        (and (= (:issuer claims) "https://github.com/login/oauth/access_token")
+             (or (empty? (:github opts))
+                 (some (fn [org-and-team]
+                         (validate-github-member? (:github_id claims)
+                                                  (first org-and-team)
+                                                  (second org-and-team)))
+                       (:github opts)))))
 
-    (:apple opts)
-    (= (:issuer claims) "https://appleid.apple.com")
-
-    :else
-    false))
+      (when (:apple opts)
+        (= (:issuer claims) "https://appleid.apple.com"))))
 
 (def login-uri "/.application.garden/garden-id/login")
 (def logout-uri "/.application.garden/garden-id/logout")
+
+(defn encode-provider-opts [opts]
+  (pr-str {:garden-id/provider-options (select-keys opts [:github :apple :garden])}))
 
 (defn- wrap-auth-oidc [app opts]
   (fn [req]
@@ -173,7 +171,7 @@
                         (assoc :login-state (str (java.util.UUID/randomUUID))))]
         {:status 302
          :headers {"content-type" "text/html"
-                   "location" (str "https://auth.application.garden/oauth2/auth?response_type=code&scope=openid%20profile&client_id=" client-id "&state=" (:login-state session))}
+                   "location" (str "https://auth.application.garden/oauth2/auth?response_type=code&scope=openid%20profile&client_id=" client-id "&state=" (:login-state session) "&login_hint=" (encode-provider-opts opts))}
          :body ""
          :session session})
 
