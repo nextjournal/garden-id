@@ -8,10 +8,7 @@
   (:import (com.auth0.jwt.exceptions JWTVerificationException)))
 
 (defonce issuers
-  {"https://auth.clerk.garden"
-   {:alg :RS256
-    :jwk-endpoint "https://auth.clerk.garden/.well-known/jwks.json"}
-   "https://auth.application.garden"
+  {"https://auth.application.garden"
    {:alg :RS256
     :jwk-endpoint "https://auth.application.garden/.well-known/jwks.json"}})
 
