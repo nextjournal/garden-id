@@ -11,7 +11,7 @@
       {:status 200 :headers {"content-type" "text/html"}
        :body (garden-id/->html [:div.text-center
                                 [:h2.font-bold.text-white.text-xl.mb-2.text-center
-                                 (format "Hi %s 👋" (or (garden-id/get-user req) "Stranger"))]
+                                 (format "Hi %s 👋" (or (:name (garden-id/get-user req)) "Stranger"))]
                                 [:p.text-white.mb-6.text-center
                                  (format "You have visited %s times" (or (:visits session) "unknown"))]
                                 (if (garden-id/logged-in? req)
@@ -19,7 +19,7 @@
                                   (garden-id/render-link-button {:href garden-id/login-uri :label "Login"}))])
        :session session})
 
-    {:status 400 :body "not found"}))
+    {:status 404 :body "not found"}))
 
 (defn start [_]
   (httpkit/run-server (-> consuming-app

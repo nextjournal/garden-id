@@ -216,6 +216,16 @@
       (app req))))
 
 (defn wrap-auth
+  "Ring middleware to add authentication (and optional authorization)
+
+   To restrict login to members of a GitHub org or team pass `:github` in `opts`
+   `{:github [[\"organization\"]... [\"organization\" \"team\"]...]}`
+
+   To restrict login to people with Apple ID pass `:apple` in `opts`
+   `{:apple []}`
+
+   Request handlers can check if a user is logged in using `logged-in?`
+   and access user details using `get-user`"
   ([app]
    (wrap-auth app {}))
   ([app opts]
