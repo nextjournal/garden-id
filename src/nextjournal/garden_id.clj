@@ -118,25 +118,46 @@
       ;; else
       (app req))))
 
-(defn- validate-github-member? [user-id org team]
-  ;; first map user-id to login name, then look up team membership
-  (let [username (-> (http/get (format "https://api.github.com/user/%s" user-id)
-                               {:headers {"Authorization"
-                                          (str "token " github-api-token)}
-                                :throw false})
+(defn validate-github-member? [user-id {:keys [team organization login id]}]
+  ;; first map user-id to login name, which the other API needs
+  (let [res (http/get (format "https://api.github.com/user/%s" user-id)
+                      {:headers {"Authorization"
+                                 (str "token " github-api-token)}
+                       :throw false})
+        _ (when (= 401 (:status res))
+            (throw (ex-info "Bad GitHub credentials for garden-id verification"
+                            {:body (:body res)})))
+        ;; status 404 (user doesn't exist (anymore)) just fails validation later
+        username (-> res
                      :body
                      (json/parse-string true)
-                     :login)
-        url (if team
-              (format "https://api.github.com/orgs/%s/teams/%s/memberships/%s"
-                      org team username)
-              (format "https://api.github.com/orgs/%s/memberships/%s"
-                      org username))
-        resp (http/get url {:headers {"Authorization"
-                                      (str "token " github-api-token)}
-                            :throw false})]
-    (and (= 200 (:status resp))
-         (= "active" (:state (json/parse-string (:body resp) true))))))
+                     :login)]
+    (cond
+      (ifn? login)
+      (login username)
+
+      (ifn? id)
+      (id user-id)
+
+      login
+      (= username login)
+
+      (and id user-id)
+      (= (str user-id) (str id))
+
+      organization
+      (let [url (if team
+                  (format "https://api.github.com/orgs/%s/teams/%s/memberships/%s"
+                          organization team username)
+                  (format "https://api.github.com/orgs/%s/memberships/%s"
+                          organization username))
+            resp (http/get url {:headers {"Authorization"
+                                          (str "token " github-api-token)}
+                                :throw false})]
+        (and (= 200 (:status resp))
+             (= "active" (:state (json/parse-string (:body resp) true)))))
+
+      :else false)))
 
 (defn- validate-extra-claims? [claims opts]
   (or (empty? opts)
@@ -144,11 +165,13 @@
       (when (:github opts)
         (and (= (:issuer claims) "https://github.com/login/oauth/access_token")
              (or (empty? (:github opts))
-                 (some (fn [org-and-team]
-                         (validate-github-member? (:github_id claims)
-                                                  (first org-and-team)
-                                                  (second org-and-team)))
-                       (:github opts)))))
+                 (let [restrictions (for [restriction (:github opts)]
+                                      (if (vector? restriction) ; legacy syntax
+                                        {:organization (first restriction)
+                                         :team (second restriction)}
+                                        restriction))]
+                   (some (partial validate-github-member? (:github_id claims))
+                         restrictions)))))
 
       (when (:apple opts)
         (= (:issuer claims) "https://appleid.apple.com"))))

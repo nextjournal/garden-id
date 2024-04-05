@@ -24,9 +24,21 @@ You can configure authorization by passing a map as the second argument to `next
 
 ### Github
 
-To only allow members of a certain Github organization or team to access your application, use:
+To only allow certain Github users, members of a certain Github
+organization or team to access your application, use:
 
-`(nextjournal.garden-id/wrap-auth my-app {:github [["organization"]... ["organization" "team"]...]})`
+`(nextjournal.garden-id/wrap-auth my-app {:github [RESTRICTIONS...]})`
+
+Possible restrictions are:
+
+* `{:login "githubhandle"}`: the user `githubhandle`
+* `{:id 1234567}`: the user with the Github ID 1234567
+* `{:login ifn}`: call ifn with the GitHub login handle, pass if returns true
+* `{:id ifn}`: call ifn with the GitHub id, pass if returns true
+* `{:organization "myorg"}`: members of the organization `myorg`.
+* `{:organization "myorg" :team "myteam"}`: members of the team `myteam` of the organization `myorg`.
+
+The user is permitted if they pass any listed restriction.
 
 You need a valid Github API token in the environment variable `GITHUB_API_TOKEN` that is scoped to read the organization members.
 
