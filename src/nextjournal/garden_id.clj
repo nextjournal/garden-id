@@ -245,10 +245,7 @@
    `{:github [[\"organization\"]... [\"organization\" \"team\"]...]}`
 
    To restrict login to people with Apple ID pass `:apple` in `opts`
-   `{:apple []}`
-
-   Request handlers can check if a user is logged in using `logged-in?`
-   and access user details using `get-user`"
+   `{:apple []}`"
   ([app]
    (wrap-auth app {}))
   ([app opts]
@@ -259,5 +256,17 @@
 (defn get-user [req]
   (get-in req [:session :user]))
 
+(defn user-uuid [req]
+  (get-in req [:session :user :sub]))
+
+(defn username [req]
+  (get-in req [:session :user :username]))
+
+(defn email [req]
+  (get-in req [:session :user :email]))
+
+(defn displayname [req]
+  (get-in req [:session :user :name]))
+
 (defn logged-in? [req]
-  (some? (get-user req)))
+  (some? (user-uuid req)))
